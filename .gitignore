@@ -1,33 +1,45 @@
-# History files
-.Rhistory
-.Rapp.history
+require(dplyr)
+require(rpart)
+require(ggplot2)
+require(stats)
 
-# Session Data files
-.RData
+setwd('C:/Users/xiaoji/Downloads/Translation_Test')
+test = read.csv("test_table.csv")
+user = read.csv("user_table.csv")
 
-# Example code in package build process
-*-Ex.R
+summary(test)
+str(test)
+test$date = as.Date(test$date)
 
-# Output files from R CMD build
-/*.tar.gz
+#in the test table, browser_language : in browser or app settings, the language chosen by the user. It can
+#be EN, ES, Other (Other means any language except for English and Spanish)conversion : whether the user 
+#converted (1) or not (0). This is our label. A test is considered successful if it increases the proportion
+#of users who convert. test : users are randomly split into test (1) and control (0). Test users see the new
+#translation and control the old one. For Spain-based users, this is obviously always 0
+#since there is no change there.
 
-# Output files from R CMD check
-/*.Rcheck/
+length(test$user_id) == length(unique(test$user_id))
+#no duplicates in test table
 
-# RStudio files
-.Rproj.user/
+length(test$user_id) == length(user$user_id)
+#missing user info in either test or user table
 
-# produced vignettes
-vignettes/*.html
-vignettes/*.pdf
+length(test$user_id) - length(user$user_id)
+#there are 454 more users' info in test table
 
-# OAuth2 token, see https://github.com/hadley/httr/releases/tag/v0.3
-.httr-oauth
+data = merge(test, user, by.y = "user_id", all = TRUE)
+summary(data)
 
-# knitr and R markdown default cache directories
-/*_cache/
-/cache/
+x = table(data$conversion)
+round(prop.table(x), digits = 3) #conversion rate is about 5%
 
-# Temporary files created by R markdown
-*.utf8.md
-*.knit.md
+y = table(data$test)
+round(prop.table(y), digits = 3) #around 47.6% user had the test(see the new translation)
+
+#check if it is true that Spain has a better conversion rate than other countries when using non-localized translation
+
+data_conversion_country = data %>%
+                  group_by (country) %>
+                  summarise (conversion = mean(conversion[test == 0])) %>%
+                  arrange(desc(conversion))
+
