@@ -37,9 +37,21 @@ y = table(data$test)
 round(prop.table(y), digits = 3) #around 47.6% user had the test(see the new translation)
 
 #check if it is true that Spain has a better conversion rate than other countries when using non-localized translation
-
+#and arrange results in the descending order
 data_conversion_country = data %>%
-                  group_by (country) %>
-                  summarise (conversion = mean(conversion[test == 0])) %>%
-                  arrange(desc(conversion))
+                  group_by (country) %>%
+                 summarise (conversion_rate = mean(conversion[test == 0]))%>%
+                 arrange(desc(conversion_rate))
 
+head(data_conversion_country) #Looks like Spain does have a best conversion rate of 7.9%
+
+ggplot(data = data_conversion_country, aes(x = country, y= conversion_rate)) +
+  geom_bar(stat = "identity", aes(fill = country)) #and Argentina and Uruguay have the worst performance
+
+#check if date has an influence on conversion rate
+
+data_test_by_day = data %>%
+                  group_by(date)%>%
+                  summarize(test_vs_control = mean(conversion[test == 1])/mean(conversion[test == 0]))
+
+qplot(date, test_vs_control, data = data_test_by_day, geom = "line")
